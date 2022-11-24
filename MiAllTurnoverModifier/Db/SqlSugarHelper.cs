@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Configuration;
+using System.IO;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -16,6 +17,6 @@ namespace MiAllTurnoverModifier.Db
                 DbType = DbType.SqlServer,
                 IsAutoCloseConnection = true
             },
-            db => { db.Aop.OnLogExecuting = (sql, pars) => { Console.WriteLine(sql); }; });
+            db => { db.Aop.OnLogExecuting = (sql, pars) => { File.WriteAllText("sql.txt", sql); }; });
     }
 }

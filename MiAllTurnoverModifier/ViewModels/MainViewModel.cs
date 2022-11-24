@@ -10,6 +10,7 @@ using MiAllTurnoverModifier.Db;
 using MiAllTurnoverModifier.Models;
 using Prism.Commands;
 using Prism.Mvvm;
+using SqlSugar;
 using Telerik.Windows.Controls;
 using DelegateCommand = Prism.Commands.DelegateCommand;
 
@@ -153,10 +154,8 @@ namespace MiAllTurnoverModifier.ViewModels
                 var currentAmount = total;
                 for (var multiple = 10; multiple > 0; --multiple)
                 {
-                    var orders = SqlSugarHelper.Db.Queryable<QTSaleOrder>()
-                        .Where(o => o.OrderNo.EndsWith(multiple.ToString()))
-                        .Where(o => o.OrderDate >= beginDate && o.OrderDate < endDate)
-                        .ToList();
+                    var orders = SqlSugarHelper.Db.SqlQueryable<QTSaleOrder>(
+                        $"SELECT [OrderNo],[Amount],[OrderDate] FROM [QTSaleOrder] where OrderDate>='{beginDate.ToString("yyyy-MM-dd")}' and OrderDate<'{endDate.ToString("yyyy-MM-dd")}' and OrderNo like '%{multiple}'").ToList();
 
                     foreach (var order in orders)
                     {
@@ -166,15 +165,20 @@ namespace MiAllTurnoverModifier.ViewModels
 
                         currentAmount -= order.Amount;
                         BusyText = $"正在调整中({decimal.Round(currentAmount, 2)})";
-                    }
 
-                    if (currentAmount < TargetAmount)
-                    {
-                        break;
+                        if (currentAmount < TargetAmount)
+                        {
+                            e.Result = AdjustAmountResult.SuccessResult();
+                            return;
+                        }
                     }
                 }
 
                 e.Result = AdjustAmountResult.SuccessResult();
+            }
+            catch (Exception exp)
+            {
+                e.Result = AdjustAmountResult.FailResult("执行失败：" + exp.Message);
             }
             finally
             {
