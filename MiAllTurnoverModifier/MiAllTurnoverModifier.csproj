@@ -93,6 +93,8 @@
       <SubType>Designer</SubType>
     </ApplicationDefinition>
     <Compile Include="Db\SqlSugarHelper.cs" />
+    <Compile Include="Models\CKXSCheck.cs" />
+    <Compile Include="Models\CKXSCheckDetail.cs" />
     <Compile Include="Models\QTSaleOrder.cs" />
     <Compile Include="ViewModels\AdjustAmountResult.cs" />
     <Compile Include="ViewModels\MainViewModel.cs" />

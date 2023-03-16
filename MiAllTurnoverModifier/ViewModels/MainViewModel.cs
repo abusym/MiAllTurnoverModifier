@@ -155,13 +155,28 @@ namespace MiAllTurnoverModifier.ViewModels
                 for (var multiple = 10; multiple > 0; --multiple)
                 {
                     var orders = SqlSugarHelper.Db.SqlQueryable<QTSaleOrder>(
-                        $"SELECT [OrderNo],[Amount],[OrderDate] FROM [QTSaleOrder] where OrderDate>='{beginDate.ToString("yyyy-MM-dd")}' and OrderDate<'{endDate.ToString("yyyy-MM-dd")}' and OrderNo like '%{multiple}'").ToList();
+                            $"SELECT [OrderNo],[Amount],[OrderDate] FROM [QTSaleOrder] where OrderDate>='{beginDate.ToString("yyyy-MM-dd")}' and OrderDate<'{endDate.ToString("yyyy-MM-dd")}' and OrderNo like '%{multiple}'")
+                        .ToList();
 
                     foreach (var order in orders)
                     {
+                        SqlSugarHelper.Db.BeginTran();
+
                         SqlSugarHelper.Db.Ado.ExecuteCommand(
                             $"delete QTSaleOrderDetail where OrderNo='{order.OrderNo}'");
                         SqlSugarHelper.Db.Deleteable(order).ExecuteCommand();
+
+                        var ck = SqlSugarHelper.Db.Queryable<CKXSCheck>().Where(o =>
+                            o.Amount == order.Amount && o.OrderDate == order.OrderDate.Date).First();
+
+                        if (ck != null)
+                        {
+                            SqlSugarHelper.Db.Deleteable<CKXSCheckDetail>().Where(o => o.OrderNo == ck.OrderNo)
+                                .ExecuteCommand();
+                            SqlSugarHelper.Db.Deleteable(ck).ExecuteCommand();
+                        }
+
+                        SqlSugarHelper.Db.CommitTran();
 
                         currentAmount -= order.Amount;
                         BusyText = $"正在调整中({decimal.Round(currentAmount, 2)})";
